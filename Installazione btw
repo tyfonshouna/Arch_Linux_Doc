@@ -1,0 +1,246 @@
+root@archiso #    (INSTALLAZIONE ARCH LINUX UEFI MANUALE) 2026
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+
+loadkeys it
+(abilita la tastiera italiana)
+
+timedatectl set-timezone Europe/Rome
+(setta il timezone di Roma)
+
+fdisk -l
+(visualizza i dischi)
+
+cfdisk /dev/xda   
+(dove x sta per la lettera del disco da partizionare)
+(sotto ai 2 Terabyte con bios legacy usare dos)
+(servono 3 partizioni, una per il boot 512 Mbyte, la seconda per lo swap e il resto per il punto di mount principale ossia l'intero OS)
+(le partizione vanno create primarie - 512M 4096M --.-G  salire sulla prima e premere b che sta per boot.)
+(per bios UEFI usare gpt. Il procedimento e' lo stesso, bisogna solo cambiare il Size Type in EFI System, Linux swap, Linux root x86-64)  
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+iwctl
+(tool per connettersi via wifi se non si ha una connessione di rete via lan)
+
+device list
+(lista device schede wifi)
+
+station wlan0 scan
+(cerca le reti wifi - il processo viene eseguito in backround)
+
+station wlan0 get-networks
+(visualizza reti wifi trovate)
+
+station wlan0 connect nome rete wifi
+(connette alla rete wifi)
+
+quit
+(esce dal tool iwctl)
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+lsblk
+(ci sono le nostre tre partizioni)
+
+mkfs.fat -F32 /dev/xda1
+(formatta la partizione di boot)
+
+mkswap /dev/xda2
+(formatta la partizione di swap)
+
+mkfs.ext4 /dev/xda3
+(formatta la partizione principale)
+
+mkdir /mnt/boot
+(crea la cartella di boot)
+
+mkdir /mnt/boot/efi
+(crea la cartella efi)
+
+mount /dev/xda1 /mnt/boot/efi
+(monta la partizione di boot nella cartella efi)
+
+swapon /dev/xda2
+(abilita lo swap)
+
+mount /dev/xda3 /mnt
+(monta la partizione del sistema in mnt)
+
+lsblk
+(vediamo i diversi punti di mount)
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+pacstrap /mnt base base-devel linux linux-firmware vim
+(installazione pacchetti principali del sistema)
+
+mkdir /mnt/boot/efi
+(crea la cartella efi)
+
+mount /dev/xda1 /mnt/boot/efi
+(monta la partizione di boot nella cartella efi)
+
+genfstab /mnt
+(mount per l'avvio del sistema)
+
+genfstab -U /mnt
+(per la priorità)
+
+genfstab -U /mnt >> /mnt/etc/fstab
+(per appendere fstab)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+
+arch-chroot /mnt /bin/bash
+(lancia una shell per avere un accesso a pacman)
+
+pacman -S networkmanager grub efibootmgr inetutils network-manager-applet git
+(installazione del networkmanager, app networkmanager grafico, utility inet, il grub ed l'efibootmanager per il boot del sistema)
+
+systemctl enable NetworkManager
+(abilita all'avvio il NetworkManager)
+
+grub-install /dev/xda
+(installa il grub)
+ 
+grub-mkconfig -o /boot/grub/grub.cfg
+(genera il file di configurazione del grub)
+
+passwd
+(imposta la password del root)
+
+pacman -S nano
+(scarica il programma nano per l'editor del testo)
+
+nano /etc/locale.gen
+(edita il file locale.gen dove va tolto # prima della dicitura it_IT.UTF-8 UTF-8 e it_IT ISO-8859-1)
+
+locale-gen
+(genera i locali)
+
+nano /etc/locale.conf
+(scrivere LANG=it_IT.UTF-8)
+
+nano /etc/vconsole.conf
+(scrivere KEYMAP=it)
+
+nano /etc/hostname
+(scrivere il nome dell'host)
+
+ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime
+(crea un link della timezone in localtime)
+
+hwclock --systohc
+(sincronizza l'hardware clock con il system clock) --OPZIONALE
+
+exit
+(esce dalla shell per tornare al dvd o pendrive live)
+
+umount -R /mnt
+(smonta tutto)
+
+reboot
+(rebootta il sistema)
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+useradd -m -G wheel,users -s /bin/bash nome_utente
+(crea un utente con l'aggiunta dei gruppi di wheel e users)
+
+passwd nome_utente
+(imposta la password dell'utente)
+
+pacman -S vi
+(installa l'editor vi)
+
+visudo
+(edita il file di sudo con l'editor vi)
+(togliere # sulla stringa %wheel ALL=(ALL:ALL) ALL    per permettere all'utente appena creato di usare sudo ed avere i privileggi di root)
+
+su nome_utente
+(si passa all'utente appena creato)
+
+sudo pacman -S programma
+(controlliamo se sudo funziona installando un qualsiasi programma)
+
+timedatectl set-ntp true
+(abilita il servizio ntp OPZIONALE)
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+INSTALLAZIONE XFCE
+
+sudo pacman -S xorg
+(installa il server grafico X11)
+
+sudo pacman -S xfce4 xfce4-goodies
+(installa xfce)
+
+sudo pacman -S lightdm lightdm-gtk-greeter
+(installa il login manager)
+
+sudo systemctl enable lightdm
+(abilita il login manager all'avvio del sistema)
+
+
+sudo systemctl start lightdm
+(avvia il login manager)
+ 
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+INSTALLAZIONE DESKTOP KDE-PLASMA
+
+sudo pacman -S plasma-desktop
+(installa il pacchetto plasma-desktop)
+
+sudo pacman -S sddm 
+(installa il display manager sddm)
+
+sudo pacman -S firefox plasma-nm plasma-pa dolphin konsole kdeplasma-addons kde-gtk-config
+(instlalla le applicazioni basi per kde)
+
+sudo pacman -S  kde-applications
+(installa altre app)
+
+sudo systemctl enable sddm 
+
+sudo systemctl start sddm
+
+---------------------------------------------------------------------------------------------------------------------
+
+INSTALLAZIONE HYPRLAND
+
+sudo pacman -S hyprland dolphin nautilus wofi hyprpaper alacritty rofi waybar kitty swayidle
+(installa  i  pacchetti)
+
+--------------------------------------------------------------------------------------------------------------------
+
+INSTALLAZIONE YAY
+
+git clone https://aur.archlinux.org/yay-bin.git
+(clona il ropository di yay)
+
+cd yay-bin
+makepkg -si
+(commpila il pacchetto yay)
+
+----------------------------------------------------------------------------------------------
+
+sudo pacman -S pipewire pipewire-audio wireplumber pavucontrol
+(installa i driver audio)
+
+sudo systemctl --user enable --now pipewire pipewire-pulse
+(abilita la scheda audio)
+
+
+
+
+
+
+
+
+
+
+
+
