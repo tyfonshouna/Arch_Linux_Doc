@@ -1,0 +1,19 @@
+sudo nano /etc/pacman.conf
+(edita il file di configurazione pacman)
+
+decommentare 
+[multilib]
+Include = /etc/pacman.d/mirrorlist
+
+sudo pacman -S steam
+(installa steam)
+
+selezionare come repository multilib "lib32-nvidia-utils"
+
+Dopo essersi loggati su steam cliccare su: steam - settings - compatibility - enable steam play for all other titles.
+dopo aver riavviato steam abilitare proton experimental.
+
+(per cambiare la lingua di Steam andare su: steam - settings - interface e cambiare la lingua)
+
+sudo pacman -S nvidia nvidia-utils nvidia-settings
+(installa i driver nvidia)
